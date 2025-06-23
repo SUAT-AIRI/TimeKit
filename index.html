@@ -1,0 +1,1797 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TimeKit - 时光工具箱</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #6366f1;
+            --secondary-color: #8b5cf6;
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --accent-color: #22d3ee;
+            --success-color: #10b981;
+            --danger-color: #ef4444;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--bg-color);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* 背景动画 */
+        .bg-animation {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: -1;
+            opacity: 0.1;
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            animation: gradient 15s ease infinite;
+        }
+
+        @keyframes gradient {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(30px, -30px) rotate(120deg); }
+            66% { transform: translate(-20px, 20px) rotate(240deg); }
+        }
+
+        /* 主页样式 */
+        .home-page {
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 4rem;
+            animation: fadeInDown 0.8s ease;
+        }
+
+        .header h1 {
+            font-size: 3.5rem;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1rem;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+        }
+
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .tool-card {
+            background: var(--card-bg);
+            border-radius: 1rem;
+            padding: 2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tool-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, transparent, rgba(99, 102, 241, 0.1));
+            transform: translateX(-100%);
+            transition: transform 0.6s ease;
+        }
+
+        .tool-card:hover::before {
+            transform: translateX(0);
+        }
+
+        .tool-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.3);
+        }
+
+        .tool-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .tool-title {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .tool-description {
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        /* 工具页面样式 */
+        .tool-page {
+            display: none;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .tool-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 3rem;
+            max-width: 1200px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .back-btn {
+            background: var(--card-bg);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+        }
+
+        .back-btn:hover {
+            background: var(--primary-color);
+            transform: translateX(-5px);
+        }
+
+        .tool-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            border-radius: 1rem;
+            padding: 3rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        /* 通用按钮样式 */
+        .btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 0.25rem;
+        }
+
+        .btn:hover {
+            background: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn.secondary {
+            background: var(--card-bg);
+            border: 1px solid var(--primary-color);
+        }
+
+        .btn.success {
+            background: var(--success-color);
+        }
+
+        .btn.danger {
+            background: var(--danger-color);
+        }
+
+        /* 输入框样式 */
+        input, select, textarea {
+            background: var(--bg-color);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            width: 100%;
+            margin-bottom: 1rem;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        /* 秒表样式 */
+        .stopwatch-display {
+            font-size: 4rem;
+            font-family: 'Courier New', monospace;
+            text-align: center;
+            margin: 2rem 0;
+            color: var(--accent-color);
+        }
+
+        .lap-times {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 2rem;
+        }
+
+        .lap-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.75rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* 番茄钟样式 */
+        .pomodoro-timer {
+            text-align: center;
+        }
+
+        .pomodoro-display {
+            font-size: 5rem;
+            font-weight: bold;
+            margin: 2rem 0;
+        }
+
+        .pomodoro-status {
+            font-size: 1.5rem;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+        }
+
+        /* 时钟样式 */
+        .clock-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 2rem 0;
+        }
+
+        .analog-clock {
+            width: 200px;
+            height: 200px;
+            border: 3px solid var(--primary-color);
+            border-radius: 50%;
+            position: relative;
+            margin: 0 2rem;
+            background: rgba(255, 255, 255, 0.02);
+        }
+        
+        /* 时钟刻度 */
+        .analog-clock::before {
+            content: '12';
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 14px;
+            font-weight: bold;
+            color: var(--text-secondary);
+        }
+        
+        .analog-clock::after {
+            content: '6';
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 14px;
+            font-weight: bold;
+            color: var(--text-secondary);
+        }
+
+        .clock-hand {
+            position: absolute;
+            left: 50%;
+            bottom: 50%;
+            transform-origin: bottom;
+            background: var(--text-primary);
+            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .hour-hand {
+            width: 4px;
+            height: 60px;
+            margin-left: -2px;
+            transform: rotate(0deg);
+        }
+
+        .minute-hand {
+            width: 3px;
+            height: 80px;
+            margin-left: -1.5px;
+            transform: rotate(0deg);
+        }
+
+        .second-hand {
+            width: 2px;
+            height: 90px;
+            margin-left: -1px;
+            background: var(--accent-color);
+            transform: rotate(0deg);
+        }
+        
+        /* 时钟刻度标记 */
+        .clock-mark {
+            position: absolute;
+            width: 2px;
+            height: 10px;
+            background: var(--text-secondary);
+            opacity: 0.5;
+            left: 50%;
+            top: 5px;
+            transform-origin: center 95px;
+        }
+
+        .clock-center {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background: var(--primary-color);
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .digital-time {
+            font-size: 2rem;
+            font-family: 'Courier New', monospace;
+            margin-top: 1rem;
+        }
+
+        /* 动画效果 */
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes pulse {
+            0% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -50%) scale(1.05); }
+            100% { transform: translate(-50%, -50%) scale(1); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2.5rem;
+            }
+
+            .tools-grid {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+
+            .tool-content {
+                padding: 1.5rem;
+            }
+
+            .stopwatch-display, .pomodoro-display {
+                font-size: 3rem;
+            }
+        }
+
+        /* 滚动条样式 */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-color);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary-color);
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--secondary-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-animation"></div>
+
+    <!-- 主页 -->
+    <div id="homePage" class="home-page">
+        <div class="header">
+            <h1>TimeKit</h1>
+            <p>你的专业时间管理工具箱</p>
+        </div>
+
+        <div class="tools-grid">
+            <div class="tool-card" onclick="showTool('stopwatch')">
+                <div class="tool-icon">⏱️</div>
+                <h3 class="tool-title">秒表</h3>
+                <p class="tool-description">精确计时，支持分段计时和暂停功能</p>
+            </div>
+
+            <div class="tool-card" onclick="showTool('pomodoro')">
+                <div class="tool-icon">🍅</div>
+                <h3 class="tool-title">番茄钟</h3>
+                <p class="tool-description">提高工作效率的番茄工作法计时器</p>
+            </div>
+
+            <div class="tool-card" onclick="showTool('timer')">
+                <div class="tool-icon">⏲️</div>
+                <h3 class="tool-title">倒计时器</h3>
+                <p class="tool-description">设置倒计时，到时提醒</p>
+            </div>
+
+            <div class="tool-card" onclick="showTool('worldClock')">
+                <div class="tool-icon">🌍</div>
+                <h3 class="tool-title">世界时钟</h3>
+                <p class="tool-description">查看全球各地时区的实时时间</p>
+            </div>
+
+            <div class="tool-card" onclick="showTool('alarm')">
+                <div class="tool-icon">⏰</div>
+                <h3 class="tool-title">闹钟</h3>
+                <p class="tool-description">设置多个闹钟提醒</p>
+            </div>
+
+            <div class="tool-card" onclick="showTool('timeConverter')">
+                <div class="tool-icon">🔄</div>
+                <h3 class="tool-title">时间戳转换</h3>
+                <p class="tool-description">Unix时间戳与日期时间互转</p>
+            </div>
+
+            <div class="tool-card" onclick="showTool('dateCalculator')">
+                <div class="tool-icon">📅</div>
+                <h3 class="tool-title">日期计算器</h3>
+                <p class="tool-description">计算日期间隔，添加或减去天数</p>
+            </div>
+
+            <div class="tool-card" onclick="showTool('ageCalculator')">
+                <div class="tool-icon">🎂</div>
+                <h3 class="tool-title">年龄计算器</h3>
+                <p class="tool-description">精确计算年龄，包括年月日</p>
+            </div>
+
+            <div class="tool-card" onclick="showTool('workTracker')">
+                <div class="tool-icon">💼</div>
+                <h3 class="tool-title">工作时间追踪</h3>
+                <p class="tool-description">记录和统计工作时间</p>
+            </div>
+
+            <div class="tool-card" onclick="showTool('sunTime')">
+                <div class="tool-icon">🌅</div>
+                <h3 class="tool-title">日出日落</h3>
+                <p class="tool-description">查看任意地点的日出日落时间</p>
+            </div>
+
+            <div class="tool-card" onclick="showTool('countdown')">
+                <div class="tool-icon">🎯</div>
+                <h3 class="tool-title">事件倒计时</h3>
+                <p class="tool-description">为重要事件创建倒计时</p>
+            </div>
+
+            <div class="tool-card" onclick="showTool('timezone')">
+                <div class="tool-icon">🕐</div>
+                <h3 class="tool-title">时区转换</h3>
+                <p class="tool-description">不同时区之间的时间转换</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 秒表页面 -->
+    <div id="stopwatchPage" class="tool-page">
+        <div class="tool-header">
+            <button class="back-btn" onclick="showHome()">← 返回</button>
+            <h2>秒表</h2>
+        </div>
+        <div class="tool-content">
+            <div class="stopwatch-display" id="stopwatchDisplay">00:00:00.00</div>
+            <div style="text-align: center;">
+                <button class="btn" id="startStopBtn" onclick="toggleStopwatch()">开始</button>
+                <button class="btn secondary" onclick="lapStopwatch()">记录</button>
+                <button class="btn danger" onclick="resetStopwatch()">重置</button>
+            </div>
+            <div class="lap-times" id="lapTimes"></div>
+        </div>
+    </div>
+
+    <!-- 番茄钟页面 -->
+    <div id="pomodoroPage" class="tool-page">
+        <div class="tool-header">
+            <button class="back-btn" onclick="showHome()">← 返回</button>
+            <h2>番茄钟</h2>
+        </div>
+        <div class="tool-content">
+            <div class="pomodoro-timer">
+                <div class="pomodoro-status" id="pomodoroStatus">准备开始工作</div>
+                <div class="pomodoro-display" id="pomodoroDisplay">25:00</div>
+                <div>
+                    <button class="btn" id="pomodoroStartBtn" onclick="togglePomodoro()">开始</button>
+                    <button class="btn secondary" onclick="resetPomodoro()">重置</button>
+                </div>
+                <div style="margin-top: 2rem;">
+                    <label>工作时间（分钟）：</label>
+                    <input type="number" id="workMinutes" value="25" min="1" max="60" style="width: 100px;">
+                    <label style="margin-left: 2rem;">休息时间（分钟）：</label>
+                    <input type="number" id="breakMinutes" value="5" min="1" max="30" style="width: 100px;">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 倒计时器页面 -->
+    <div id="timerPage" class="tool-page">
+        <div class="tool-header">
+            <button class="back-btn" onclick="showHome()">← 返回</button>
+            <h2>倒计时器</h2>
+        </div>
+        <div class="tool-content">
+            <div style="text-align: center;">
+                <div class="stopwatch-display" id="timerDisplay">00:00:00</div>
+                <div style="margin-bottom: 2rem;">
+                    <input type="number" id="timerHours" placeholder="小时" min="0" max="23" style="width: 100px; display: inline-block;">
+                    <input type="number" id="timerMinutes" placeholder="分钟" min="0" max="59" style="width: 100px; display: inline-block;">
+                    <input type="number" id="timerSeconds" placeholder="秒" min="0" max="59" style="width: 100px; display: inline-block;">
+                </div>
+                <button class="btn" id="timerStartBtn" onclick="toggleTimer()">开始</button>
+                <button class="btn danger" onclick="resetTimer()">重置</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 世界时钟页面 -->
+    <div id="worldClockPage" class="tool-page">
+        <div class="tool-header">
+            <button class="back-btn" onclick="showHome()">← 返回</button>
+            <h2>世界时钟</h2>
+        </div>
+        <div class="tool-content">
+            <div id="worldClockContainer" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
+                <!-- 动态生成世界时钟 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 闹钟页面 -->
+    <div id="alarmPage" class="tool-page">
+        <div class="tool-header">
+            <button class="back-btn" onclick="showHome()">← 返回</button>
+            <h2>闹钟</h2>
+        </div>
+        <div class="tool-content">
+            <div style="text-align: center;">
+                <h3>设置新闹钟</h3>
+                <div style="display: inline-flex; align-items: center; gap: 0.5rem; margin: 1rem 0;">
+                    <input type="number" id="alarmHours" placeholder="时" min="0" max="23" style="width: 80px;">
+                    <span style="font-size: 1.5rem;">:</span>
+                    <input type="number" id="alarmMinutes" placeholder="分" min="0" max="59" style="width: 80px;">
+                </div>
+                <input type="text" id="alarmLabel" placeholder="闹钟标签（例如：起床、开会）" style="width: 300px;">
+                <div style="margin: 1rem 0;">
+                    <label style="display: inline-flex; align-items: center; gap: 0.5rem;">
+                        <input type="checkbox" id="alarmRepeat" style="width: auto; margin: 0;">
+                        <span>每天重复</span>
+                    </label>
+                </div>
+                <button class="btn" onclick="addAlarm()">添加闹钟</button>
+            </div>
+            <div id="alarmsList" style="margin-top: 2rem;">
+                <!-- 闹钟列表 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 时间戳转换页面 -->
+    <div id="timeConverterPage" class="tool-page">
+        <div class="tool-header">
+            <button class="back-btn" onclick="showHome()">← 返回</button>
+            <h2>时间戳转换</h2>
+        </div>
+        <div class="tool-content">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                <div>
+                    <h3>时间戳转日期</h3>
+                    <input type="number" id="timestampInput" placeholder="输入Unix时间戳">
+                    <button class="btn" onclick="convertTimestamp()">转换</button>
+                    <div id="timestampResult" style="margin-top: 1rem; font-size: 1.2rem;"></div>
+                </div>
+                <div>
+                    <h3>日期转时间戳</h3>
+                    <input type="datetime-local" id="datetimeInput">
+                    <button class="btn" onclick="convertDatetime()">转换</button>
+                    <div id="datetimeResult" style="margin-top: 1rem; font-size: 1.2rem;"></div>
+                </div>
+            </div>
+            <div style="margin-top: 2rem; text-align: center;">
+                <button class="btn secondary" onclick="getCurrentTimestamp()">获取当前时间戳</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 日期计算器页面 -->
+    <div id="dateCalculatorPage" class="tool-page">
+        <div class="tool-header">
+            <button class="back-btn" onclick="showHome()">← 返回</button>
+            <h2>日期计算器</h2>
+        </div>
+        <div class="tool-content">
+            <div style="margin-bottom: 2rem;">
+                <h3>计算两个日期之间的间隔</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <input type="date" id="date1" placeholder="开始日期">
+                    <input type="date" id="date2" placeholder="结束日期">
+                </div>
+                <button class="btn" onclick="calculateDateDiff()">计算间隔</button>
+                <div id="dateDiffResult" style="margin-top: 1rem; font-size: 1.2rem;"></div>
+            </div>
+            <div>
+                <h3>日期加减计算</h3>
+                <input type="date" id="baseDate" placeholder="基准日期">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+                    <input type="number" id="daysToAdd" placeholder="天数（正数加，负数减）">
+                    <button class="btn" onclick="addDays()">计算</button>
+                </div>
+                <div id="addDaysResult" style="margin-top: 1rem; font-size: 1.2rem;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 年龄计算器页面 -->
+    <div id="ageCalculatorPage" class="tool-page">
+        <div class="tool-header">
+            <button class="back-btn" onclick="showHome()">← 返回</button>
+            <h2>年龄计算器</h2>
+        </div>
+        <div class="tool-content">
+            <div style="text-align: center;">
+                <h3>请选择您的出生日期</h3>
+                <div style="display: inline-flex; gap: 1rem; align-items: center; margin: 2rem 0;">
+                    <select id="birthYear" onchange="updateDays()" style="width: 120px;">
+                        <option value="">年份</option>
+                    </select>
+                    <select id="birthMonth" onchange="updateDays()" style="width: 100px;">
+                        <option value="">月份</option>
+                    </select>
+                    <select id="birthDay" style="width: 100px;">
+                        <option value="">日期</option>
+                    </select>
+                </div>
+                <button class="btn" onclick="calculateAge()" style="font-size: 1.2rem; padding: 1rem 2rem;">计算年龄</button>
+                <div id="ageResult" style="margin-top: 2rem;"></div>
+                <div id="nextBirthday"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 工作时间追踪页面 -->
+    <div id="workTrackerPage" class="tool-page">
+        <div class="tool-header">
+            <button class="back-btn" onclick="showHome()">← 返回</button>
+            <h2>工作时间追踪</h2>
+        </div>
+        <div class="tool-content">
+            <div style="text-align: center;">
+                <div class="stopwatch-display" id="workTimeDisplay">00:00:00</div>
+                <input type="text" id="taskName" placeholder="任务名称" style="width: 300px; margin-bottom: 1rem;">
+                <div>
+                    <button class="btn" id="workStartBtn" onclick="toggleWork()">开始工作</button>
+                    <button class="btn success" onclick="saveWorkSession()">保存记录</button>
+                </div>
+            </div>
+            <div id="workHistory" style="margin-top: 2rem;">
+                <h3>工作记录</h3>
+                <div id="workHistoryList"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 日出日落页面 -->
+    <div id="sunTimePage" class="tool-page">
+        <div class="tool-header">
+            <button class="back-btn" onclick="showHome()">← 返回</button>
+            <h2>日出日落时间</h2>
+        </div>
+        <div class="tool-content">
+            <div style="text-align: center;">
+                <h3>输入位置信息</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; max-width: 400px; margin: 0 auto;">
+                    <input type="number" id="latitude" placeholder="纬度" step="0.0001">
+                    <input type="number" id="longitude" placeholder="经度" step="0.0001">
+                </div>
+                <button class="btn" onclick="getCurrentLocation()">获取当前位置</button>
+                <button class="btn secondary" onclick="calculateSunTimes()">计算</button>
+                <div id="sunTimesResult" style="margin-top: 2rem; font-size: 1.2rem;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 事件倒计时页面 -->
+    <div id="countdownPage" class="tool-page">
+        <div class="tool-header">
+            <button class="back-btn" onclick="showHome()">← 返回</button>
+            <h2>事件倒计时</h2>
+        </div>
+        <div class="tool-content">
+            <div style="text-align: center;">
+                <h3>创建新的倒计时</h3>
+                <input type="text" id="eventName" placeholder="事件名称" style="width: 300px;">
+                <input type="datetime-local" id="eventDateTime" style="width: 300px;">
+                <button class="btn" onclick="createCountdown()">创建倒计时</button>
+            </div>
+            <div id="countdownsList" style="margin-top: 2rem;">
+                <!-- 倒计时列表 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 时区转换页面 -->
+    <div id="timezonePage" class="tool-page">
+        <div class="tool-header">
+            <button class="back-btn" onclick="showHome()">← 返回</button>
+            <h2>时区转换</h2>
+        </div>
+        <div class="tool-content">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                <div style="text-align: center;">
+                    <h3 id="timezone1Name">北京时间</h3>
+                    <div class="clock-container">
+                        <div class="analog-clock" id="clock1">
+                            <div class="clock-hand hour-hand" id="hour1"></div>
+                            <div class="clock-hand minute-hand" id="minute1"></div>
+                            <div class="clock-hand second-hand" id="second1"></div>
+                            <div class="clock-center"></div>
+                        </div>
+                    </div>
+                    <div class="digital-time" id="digitalTime1"></div>
+                    <div id="date1" style="color: var(--text-secondary); margin-top: 0.5rem; font-size: 0.9rem;"></div>
+                    <select id="timezone1" onchange="updateTimezones()" style="margin-top: 1rem;">
+                        <optgroup label="UTC-12 至 UTC-1">
+                            <option value="-12">UTC-12 国际日期变更线西</option>
+                            <option value="-11">UTC-11 美属萨摩亚</option>
+                            <option value="-10">UTC-10 夏威夷</option>
+                            <option value="-9">UTC-9 阿拉斯加</option>
+                            <option value="-8">UTC-8 洛杉矶/温哥华</option>
+                            <option value="-7">UTC-7 丹佛/凤凰城</option>
+                            <option value="-6">UTC-6 芝加哥/墨西哥城</option>
+                            <option value="-5">UTC-5 纽约/多伦多</option>
+                            <option value="-4">UTC-4 圣地亚哥/拉巴斯</option>
+                            <option value="-3">UTC-3 布宜诺斯艾利斯</option>
+                            <option value="-2">UTC-2 中大西洋</option>
+                            <option value="-1">UTC-1 亚速尔群岛</option>
+                        </optgroup>
+                        <optgroup label="UTC+0 至 UTC+12">
+                            <option value="0">UTC+0 伦敦/都柏林</option>
+                            <option value="1">UTC+1 巴黎/柏林/罗马</option>
+                            <option value="2">UTC+2 开罗/雅典/耶路撒冷</option>
+                            <option value="3">UTC+3 莫斯科/伊斯坦布尔</option>
+                            <option value="4">UTC+4 迪拜/巴库</option>
+                            <option value="5">UTC+5 卡拉奇/塔什干</option>
+                            <option value="5.5">UTC+5:30 新德里/孟买</option>
+                            <option value="6">UTC+6 达卡/阿拉木图</option>
+                            <option value="7">UTC+7 曼谷/雅加达</option>
+                            <option value="8" selected>UTC+8 北京/香港/新加坡</option>
+                            <option value="9">UTC+9 东京/首尔</option>
+                            <option value="10">UTC+10 悉尼/墨尔本</option>
+                            <option value="11">UTC+11 所罗门群岛</option>
+                            <option value="12">UTC+12 奥克兰/斐济</option>
+                        </optgroup>
+                    </select>
+                </div>
+                <div style="text-align: center;">
+                    <h3 id="timezone2Name">纽约时间</h3>
+                    <div class="clock-container">
+                        <div class="analog-clock" id="clock2">
+                            <div class="clock-hand hour-hand" id="hour2"></div>
+                            <div class="clock-hand minute-hand" id="minute2"></div>
+                            <div class="clock-hand second-hand" id="second2"></div>
+                            <div class="clock-center"></div>
+                        </div>
+                    </div>
+                    <div class="digital-time" id="digitalTime2"></div>
+                    <div id="date2" style="color: var(--text-secondary); margin-top: 0.5rem; font-size: 0.9rem;"></div>
+                    <select id="timezone2" onchange="updateTimezones()" style="margin-top: 1rem;">
+                        <optgroup label="UTC-12 至 UTC-1">
+                            <option value="-12">UTC-12 国际日期变更线西</option>
+                            <option value="-11">UTC-11 美属萨摩亚</option>
+                            <option value="-10">UTC-10 夏威夷</option>
+                            <option value="-9">UTC-9 阿拉斯加</option>
+                            <option value="-8">UTC-8 洛杉矶/温哥华</option>
+                            <option value="-7">UTC-7 丹佛/凤凰城</option>
+                            <option value="-6">UTC-6 芝加哥/墨西哥城</option>
+                            <option value="-5" selected>UTC-5 纽约/多伦多</option>
+                            <option value="-4">UTC-4 圣地亚哥/拉巴斯</option>
+                            <option value="-3">UTC-3 布宜诺斯艾利斯</option>
+                            <option value="-2">UTC-2 中大西洋</option>
+                            <option value="-1">UTC-1 亚速尔群岛</option>
+                        </optgroup>
+                        <optgroup label="UTC+0 至 UTC+12">
+                            <option value="0">UTC+0 伦敦/都柏林</option>
+                            <option value="1">UTC+1 巴黎/柏林/罗马</option>
+                            <option value="2">UTC+2 开罗/雅典/耶路撒冷</option>
+                            <option value="3">UTC+3 莫斯科/伊斯坦布尔</option>
+                            <option value="4">UTC+4 迪拜/巴库</option>
+                            <option value="5">UTC+5 卡拉奇/塔什干</option>
+                            <option value="5.5">UTC+5:30 新德里/孟买</option>
+                            <option value="6">UTC+6 达卡/阿拉木图</option>
+                            <option value="7">UTC+7 曼谷/雅加达</option>
+                            <option value="8">UTC+8 北京/香港/新加坡</option>
+                            <option value="9">UTC+9 东京/首尔</option>
+                            <option value="10">UTC+10 悉尼/墨尔本</option>
+                            <option value="11">UTC+11 所罗门群岛</option>
+                            <option value="12">UTC+12 奥克兰/斐济</option>
+                        </optgroup>
+                    </select>
+                </div>
+            </div>
+            <div style="margin-top: 2rem; padding: 1rem; background: var(--bg-color); border-radius: 0.5rem; text-align: center;">
+                <p style="color: var(--text-secondary);">
+                    时差：<span style="color: var(--accent-color); font-size: 1.2rem;" id="timeDifference"></span> 小时
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+                // 全局变量
+        let currentPage = 'home';
+        let stopwatchInterval = null;
+        let stopwatchTime = 0;
+        let pomodoroInterval = null;
+        let pomodoroTime = 25 * 60;
+        let isWorking = true;
+        let timerInterval = null;
+        let timerTime = 0;
+        let workInterval = null;
+        let workTime = 0;
+        let worldClockInterval = null;
+        let timezoneInterval = null;
+        let countdownInterval = null;
+        let alarms = [];
+        let countdowns = [];
+        let workSessions = [];
+
+        // 清理所有定时器
+        function clearAllIntervals() {
+            if (stopwatchInterval) {
+                clearInterval(stopwatchInterval);
+                stopwatchInterval = null;
+            }
+            if (pomodoroInterval) {
+                clearInterval(pomodoroInterval);
+                pomodoroInterval = null;
+            }
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+            if (workInterval) {
+                clearInterval(workInterval);
+                workInterval = null;
+            }
+            if (worldClockInterval) {
+                clearInterval(worldClockInterval);
+                worldClockInterval = null;
+            }
+            if (timezoneInterval) {
+                clearInterval(timezoneInterval);
+                timezoneInterval = null;
+            }
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+                countdownInterval = null;
+            }
+        }
+        
+        // 页面切换
+        function showHome() {
+            clearAllIntervals();
+            document.getElementById('homePage').style.display = 'block';
+            document.querySelectorAll('.tool-page').forEach(page => {
+                page.style.display = 'none';
+            });
+            currentPage = 'home';
+        }
+
+        function showTool(toolName) {
+            clearAllIntervals(); // 清理所有定时器
+            
+            document.getElementById('homePage').style.display = 'none';
+            document.querySelectorAll('.tool-page').forEach(page => {
+                page.style.display = 'none';
+            });
+            
+            const targetPage = document.getElementById(toolName + 'Page');
+            if (targetPage) {
+                targetPage.style.display = 'block';
+                targetPage.classList.add('fade-in');
+            }
+            
+            currentPage = toolName;
+
+            // 特定工具初始化
+            switch(toolName) {
+                case 'worldClock':
+                    initWorldClock();
+                    break;
+                    case 'timezone':
+                    // 确保选择器有默认值
+                    setTimeout(() => {
+                        const tz1 = document.getElementById('timezone1');
+                        const tz2 = document.getElementById('timezone2');
+                        if (tz1 && !tz1.value) tz1.value = "8";
+                        if (tz2 && !tz2.value) tz2.value = "-5";
+                        
+                        // 更新时区名称和时差
+                        updateTimezones();
+                        
+                        // 启动时钟
+                        startTimezoneClock();
+                    }, 100);
+                    break;
+                case 'countdown':
+                    startCountdownUpdates();
+                    updateCountdownsList();
+                    break;
+                case 'ageCalculator':
+                    initAgeCalculator();
+                    break;
+            }
+        }
+        
+        function initAgeCalculator() {
+            const yearSelect = document.getElementById('birthYear');
+            const monthSelect = document.getElementById('birthMonth');
+            const daySelect = document.getElementById('birthDay');
+            
+            if (!yearSelect || !monthSelect || !daySelect) {
+                return;
+            }
+            
+            // 初始化年份（如果还没有选项）
+            if (yearSelect.options.length <= 1) {
+                const currentYear = new Date().getFullYear();
+                for (let i = 0; i < 120; i++) {
+                    const year = currentYear - i;
+                    const option = document.createElement('option');
+                    option.value = year;
+                    option.textContent = year + '年';
+                    yearSelect.appendChild(option);
+                }
+            }
+            
+            // 初始化月份（如果还没有选项）
+            if (monthSelect.options.length <= 1) {
+                for (let i = 1; i <= 12; i++) {
+                    const option = document.createElement('option');
+                    option.value = i;
+                    option.textContent = i + '月';
+                    monthSelect.appendChild(option);
+                }
+            }
+            
+            // 初始化日期（如果还没有选项）
+            if (daySelect.options.length <= 1) {
+                for (let i = 1; i <= 31; i++) {
+                    const option = document.createElement('option');
+                    option.value = i;
+                    option.textContent = i + '日';
+                    daySelect.appendChild(option);
+                }
+            }
+        }
+        
+        function updateTimeDifference() {
+            const timezone1Element = document.getElementById('timezone1');
+            const timezone2Element = document.getElementById('timezone2');
+            const timeDifferenceElement = document.getElementById('timeDifference');
+            
+            if (!timezone1Element || !timezone2Element || !timeDifferenceElement) return;
+            
+            const tz1 = parseFloat(timezone1Element.value) || 8;
+            const tz2 = parseFloat(timezone2Element.value) || -5;
+            const diff = Math.abs(tz1 - tz2);
+            timeDifferenceElement.textContent = diff;
+        }
+
+        // 秒表功能
+        function toggleStopwatch() {
+            const btn = document.getElementById('startStopBtn');
+            if (stopwatchInterval) {
+                clearInterval(stopwatchInterval);
+                stopwatchInterval = null;
+                btn.textContent = '继续';
+                btn.classList.remove('success');
+            } else {
+                stopwatchInterval = setInterval(updateStopwatch, 10);
+                btn.textContent = '暂停';
+                btn.classList.add('success');
+            }
+        }
+
+        function updateStopwatch() {
+            stopwatchTime += 10;
+            const display = document.getElementById('stopwatchDisplay');
+            display.textContent = formatStopwatchTime(stopwatchTime);
+        }
+
+        function formatStopwatchTime(ms) {
+            const totalSeconds = Math.floor(ms / 1000);
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = totalSeconds % 60;
+            const milliseconds = Math.floor((ms % 1000) / 10);
+            
+            return `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}:${String(seconds).padStart(2, '0')}.${String(milliseconds).padStart(2, '0')}`;
+        }
+
+        function lapStopwatch() {
+            if (stopwatchTime > 0) {
+                const lapTimes = document.getElementById('lapTimes');
+                const lapCount = lapTimes.children.length + 1;
+                const lapItem = document.createElement('div');
+                lapItem.className = 'lap-item';
+                lapItem.innerHTML = `
+                    <span>记录 ${lapCount}</span>
+                    <span>${formatStopwatchTime(stopwatchTime)}</span>
+                `;
+                lapTimes.insertBefore(lapItem, lapTimes.firstChild);
+            }
+        }
+
+        function resetStopwatch() {
+            clearInterval(stopwatchInterval);
+            stopwatchInterval = null;
+            stopwatchTime = 0;
+            document.getElementById('stopwatchDisplay').textContent = '00:00:00.00';
+            document.getElementById('lapTimes').innerHTML = '';
+            document.getElementById('startStopBtn').textContent = '开始';
+            document.getElementById('startStopBtn').classList.remove('success');
+        }
+
+        // 番茄钟功能
+        function togglePomodoro() {
+            const btn = document.getElementById('pomodoroStartBtn');
+            if (pomodoroInterval) {
+                clearInterval(pomodoroInterval);
+                pomodoroInterval = null;
+                btn.textContent = '继续';
+            } else {
+                pomodoroInterval = setInterval(updatePomodoro, 1000);
+                btn.textContent = '暂停';
+            }
+        }
+
+        function updatePomodoro() {
+            pomodoroTime--;
+            const display = document.getElementById('pomodoroDisplay');
+            const minutes = Math.floor(pomodoroTime / 60);
+            const seconds = pomodoroTime % 60;
+            display.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+            if (pomodoroTime <= 0) {
+                clearInterval(pomodoroInterval);
+                pomodoroInterval = null;
+                
+                if (isWorking) {
+                    isWorking = false;
+                    pomodoroTime = parseInt(document.getElementById('breakMinutes').value) * 60;
+                    document.getElementById('pomodoroStatus').textContent = '休息时间！';
+                    alert('工作时间结束！开始休息吧！');
+                } else {
+                    isWorking = true;
+                    pomodoroTime = parseInt(document.getElementById('workMinutes').value) * 60;
+                    document.getElementById('pomodoroStatus').textContent = '工作时间！';
+                    alert('休息结束！继续工作吧！');
+                }
+                
+                updatePomodoro();
+                document.getElementById('pomodoroStartBtn').textContent = '开始';
+            }
+        }
+
+        function resetPomodoro() {
+            clearInterval(pomodoroInterval);
+            pomodoroInterval = null;
+            isWorking = true;
+            pomodoroTime = parseInt(document.getElementById('workMinutes').value) * 60;
+            document.getElementById('pomodoroStatus').textContent = '准备开始工作';
+            updatePomodoro();
+            document.getElementById('pomodoroStartBtn').textContent = '开始';
+        }
+
+        // 倒计时器功能
+        function toggleTimer() {
+            const btn = document.getElementById('timerStartBtn');
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+                btn.textContent = '继续';
+            } else {
+                if (timerTime === 0) {
+                    const hours = parseInt(document.getElementById('timerHours').value) || 0;
+                    const minutes = parseInt(document.getElementById('timerMinutes').value) || 0;
+                    const seconds = parseInt(document.getElementById('timerSeconds').value) || 0;
+                    timerTime = hours * 3600 + minutes * 60 + seconds;
+                }
+                
+                if (timerTime > 0) {
+                    timerInterval = setInterval(updateTimer, 1000);
+                    btn.textContent = '暂停';
+                }
+            }
+        }
+
+        function updateTimer() {
+            timerTime--;
+            const display = document.getElementById('timerDisplay');
+            const hours = Math.floor(timerTime / 3600);
+            const minutes = Math.floor((timerTime % 3600) / 60);
+            const seconds = timerTime % 60;
+            
+            display.textContent = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+            if (timerTime <= 0) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+                alert('倒计时结束！');
+                document.getElementById('timerStartBtn').textContent = '开始';
+            }
+        }
+
+        function resetTimer() {
+            clearInterval(timerInterval);
+            timerInterval = null;
+            timerTime = 0;
+            document.getElementById('timerDisplay').textContent = '00:00:00';
+            document.getElementById('timerHours').value = '';
+            document.getElementById('timerMinutes').value = '';
+            document.getElementById('timerSeconds').value = '';
+            document.getElementById('timerStartBtn').textContent = '开始';
+        }
+
+        // 世界时钟功能
+        function initWorldClock() {
+            const cities = [
+                { name: '北京', timezone: 'Asia/Shanghai', offset: 8 },
+                { name: '东京', timezone: 'Asia/Tokyo', offset: 9 },
+                { name: '纽约', timezone: 'America/New_York', offset: -5 },
+                { name: '伦敦', timezone: 'Europe/London', offset: 0 },
+                { name: '巴黎', timezone: 'Europe/Paris', offset: 1 },
+                { name: '悉尼', timezone: 'Australia/Sydney', offset: 11 }
+            ];
+
+            const container = document.getElementById('worldClockContainer');
+            container.innerHTML = '';
+
+            cities.forEach(city => {
+                const clockDiv = document.createElement('div');
+                clockDiv.style.textAlign = 'center';
+                clockDiv.style.padding = '1rem';
+                clockDiv.style.background = 'var(--bg-color)';
+                clockDiv.style.borderRadius = '0.5rem';
+                
+                const now = new Date();
+                const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+                const cityTime = new Date(utc + (3600000 * city.offset));
+                
+                clockDiv.innerHTML = `
+                    <h3>${city.name}</h3>
+                    <div class="digital-time">${cityTime.toLocaleTimeString()}</div>
+                    <div style="color: var(--text-secondary);">${cityTime.toLocaleDateString()}</div>
+                `;
+                
+                container.appendChild(clockDiv);
+            });
+
+            // 每秒更新
+            setInterval(() => {
+                if (currentPage === 'worldClock') {
+                    initWorldClock();
+                }
+            }, 1000);
+        }
+
+        // 闹钟功能
+        function addAlarm() {
+            const time = document.getElementById('alarmTime').value;
+            const label = document.getElementById('alarmLabel').value || '闹钟';
+            
+            if (time) {
+                const alarm = {
+                    id: Date.now(),
+                    time: time,
+                    label: label,
+                    active: true
+                };
+                
+                alarms.push(alarm);
+                updateAlarmsList();
+                
+                document.getElementById('alarmTime').value = '';
+                document.getElementById('alarmLabel').value = '';
+            }
+        }
+
+        function updateAlarmsList() {
+            const list = document.getElementById('alarmsList');
+            list.innerHTML = '<h3>已设置的闹钟</h3>';
+            
+            alarms.forEach(alarm => {
+                const alarmDiv = document.createElement('div');
+                alarmDiv.style.display = 'flex';
+                alarmDiv.style.justifyContent = 'space-between';
+                alarmDiv.style.alignItems = 'center';
+                alarmDiv.style.padding = '1rem';
+                alarmDiv.style.marginBottom = '0.5rem';
+                alarmDiv.style.background = 'var(--bg-color)';
+                alarmDiv.style.borderRadius = '0.5rem';
+                
+                alarmDiv.innerHTML = `
+                    <div>
+                        <div style="font-size: 1.5rem;">${alarm.time}</div>
+                        <div style="color: var(--text-secondary);">${alarm.label}</div>
+                    </div>
+                    <button class="btn danger" onclick="removeAlarm(${alarm.id})">删除</button>
+                `;
+                
+                list.appendChild(alarmDiv);
+            });
+        }
+
+        function removeAlarm(id) {
+            alarms = alarms.filter(alarm => alarm.id !== id);
+            updateAlarmsList();
+        }
+
+        // 检查闹钟
+        setInterval(() => {
+            const now = new Date();
+            const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+            
+            alarms.forEach(alarm => {
+                if (alarm.active && alarm.time === currentTime) {
+                    alert(`闹钟响了：${alarm.label}`);
+                    alarm.active = false;
+                    setTimeout(() => {
+                        alarm.active = true;
+                    }, 60000);
+                }
+            });
+        }, 1000);
+
+        // 时间戳转换功能
+        function convertTimestamp() {
+            const timestamp = parseInt(document.getElementById('timestampInput').value);
+            if (timestamp) {
+                const date = new Date(timestamp * 1000);
+                document.getElementById('timestampResult').textContent = date.toLocaleString();
+            }
+        }
+
+        function convertDatetime() {
+            const datetime = document.getElementById('datetimeInput').value;
+            if (datetime) {
+                const timestamp = Math.floor(new Date(datetime).getTime() / 1000);
+                document.getElementById('datetimeResult').textContent = `时间戳：${timestamp}`;
+            }
+        }
+
+        function getCurrentTimestamp() {
+            const timestamp = Math.floor(Date.now() / 1000);
+            document.getElementById('timestampInput').value = timestamp;
+            convertTimestamp();
+        }
+
+        // 日期计算器功能
+        function calculateDateDiff() {
+            const date1 = new Date(document.getElementById('date1').value);
+            const date2 = new Date(document.getElementById('date2').value);
+            
+            if (date1 && date2) {
+                const diffTime = Math.abs(date2 - date1);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                const diffWeeks = Math.floor(diffDays / 7);
+                const diffMonths = Math.floor(diffDays / 30.44);
+                const diffYears = Math.floor(diffDays / 365.25);
+                
+                document.getElementById('dateDiffResult').innerHTML = `
+                    <div>相差：${diffDays} 天</div>
+                    <div>约 ${diffWeeks} 周</div>
+                    <div>约 ${diffMonths} 月</div>
+                    <div>约 ${diffYears} 年</div>
+                `;
+            }
+        }
+
+        function addDays() {
+            const baseDate = new Date(document.getElementById('baseDate').value);
+            const daysToAdd = parseInt(document.getElementById('daysToAdd').value);
+            
+            if (baseDate && daysToAdd) {
+                const resultDate = new Date(baseDate);
+                resultDate.setDate(resultDate.getDate() + daysToAdd);
+                
+                document.getElementById('addDaysResult').textContent = 
+                    `结果日期：${resultDate.toLocaleDateString()} (${resultDate.toLocaleDateString('zh-CN', { weekday: 'long' })})`;
+            }
+        }
+                // 更新日期选项（根据年份和月份）
+        function updateDays() {
+            const yearSelect = document.getElementById('birthYear');
+            const monthSelect = document.getElementById('birthMonth');
+            const daySelect = document.getElementById('birthDay');
+            
+            if (!yearSelect || !monthSelect || !daySelect) return;
+            
+            const year = parseInt(yearSelect.value);
+            const month = parseInt(monthSelect.value);
+            
+            if (year && month) {
+                // 清空现有选项
+                daySelect.innerHTML = '<option value="">日期</option>';
+                
+                // 计算该月的天数
+                const daysInMonth = new Date(year, month, 0).getDate();
+                
+                // 添加日期选项
+                for (let i = 1; i <= daysInMonth; i++) {
+                    const option = document.createElement('option');
+                    option.value = i;
+                    option.textContent = i + '日';
+                    daySelect.appendChild(option);
+                }
+            }
+        }
+        // 年龄计算器功能
+        function calculateAge() {
+            const year = parseInt(document.getElementById('birthYear').value);
+            const month = parseInt(document.getElementById('birthMonth').value);
+            const day = parseInt(document.getElementById('birthDay').value);
+            
+            if (year && month && day) {
+                const birthDate = new Date(year, month - 1, day); // 月份从0开始
+                const today = new Date();
+                
+                let age = today.getFullYear() - birthDate.getFullYear();
+                const monthDiff = today.getMonth() - birthDate.getMonth();
+                
+                if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                    age--;
+                }
+                
+                // 计算精确的年月日
+                let years = age;
+                let months = monthDiff >= 0 ? monthDiff : 12 + monthDiff;
+                let days = today.getDate() - birthDate.getDate();
+                
+                if (days < 0) {
+                    months--;
+                    const lastMonth = new Date(today.getFullYear(), today.getMonth(), 0);
+                    days = lastMonth.getDate() + days;
+                }
+                
+                if (months < 0) {
+                    years--;
+                    months = 12 + months;
+                }
+                
+                // 计算总天数
+                const totalDays = Math.floor((today - birthDate) / (1000 * 60 * 60 * 24));
+                
+                document.getElementById('ageResult').innerHTML = `
+                    <div style="font-size: 1.5rem; color: var(--accent-color); margin-bottom: 1rem;">
+                        ${years} 岁 ${months} 个月 ${days} 天
+                    </div>
+                    <div>已经活了 ${totalDays} 天</div>
+                `;
+                
+                // 计算下次生日
+                const nextBirthday = new Date(today.getFullYear(), birthDate.getMonth(), birthDate.getDate());
+                if (nextBirthday < today) {
+                    nextBirthday.setFullYear(nextBirthday.getFullYear() + 1);
+                }
+                const daysToNextBirthday = Math.ceil((nextBirthday - today) / (1000 * 60 * 60 * 24));
+                
+                document.getElementById('nextBirthday').innerHTML = `
+                    <div style="margin-top: 1rem; color: var(--text-secondary);">
+                        距离下次生日还有 ${daysToNextBirthday} 天
+                    </div>
+                `;
+            } else {
+                alert('请选择完整的出生日期');
+            }
+        }
+
+        // 工作时间追踪功能
+        function toggleWork() {
+            const btn = document.getElementById('workStartBtn');
+            if (workInterval) {
+                clearInterval(workInterval);
+                workInterval = null;
+                btn.textContent = '开始工作';
+            } else {
+                workInterval = setInterval(updateWorkTime, 1000);
+                btn.textContent = '停止工作';
+            }
+        }
+
+        function updateWorkTime() {
+            workTime++;
+            const display = document.getElementById('workTimeDisplay');
+            const hours = Math.floor(workTime / 3600);
+            const minutes = Math.floor((workTime % 3600) / 60);
+            const seconds = workTime % 60;
+            
+            display.textContent = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        }
+
+        function saveWorkSession() {
+            if (workTime > 0) {
+                const taskName = document.getElementById('taskName').value || '未命名任务';
+                const session = {
+                    id: Date.now(),
+                    task: taskName,
+                    duration: workTime,
+                    date: new Date().toLocaleString()
+                };
+                
+                workSessions.push(session);
+                updateWorkHistory();
+                
+                // 重置
+                clearInterval(workInterval);
+                workInterval = null;
+                workTime = 0;
+                document.getElementById('workTimeDisplay').textContent = '00:00:00';
+                document.getElementById('taskName').value = '';
+                document.getElementById('workStartBtn').textContent = '开始工作';
+            }
+        }
+
+        function updateWorkHistory() {
+            const list = document.getElementById('workHistoryList');
+            list.innerHTML = '';
+            
+            workSessions.reverse().forEach(session => {
+                const hours = Math.floor(session.duration / 3600);
+                const minutes = Math.floor((session.duration % 3600) / 60);
+                
+                const sessionDiv = document.createElement('div');
+                sessionDiv.style.padding = '1rem';
+                sessionDiv.style.marginBottom = '0.5rem';
+                sessionDiv.style.background = 'var(--bg-color)';
+                sessionDiv.style.borderRadius = '0.5rem';
+                
+                sessionDiv.innerHTML = `
+                    <div style="font-weight: bold;">${session.task}</div>
+                    <div>时长：${hours} 小时 ${minutes} 分钟</div>
+                    <div style="color: var(--text-secondary); font-size: 0.9rem;">${session.date}</div>
+                `;
+                
+                list.appendChild(sessionDiv);
+            });
+        }
+
+        // 日出日落功能
+        function getCurrentLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    position => {
+                        document.getElementById('latitude').value = position.coords.latitude.toFixed(4);
+                        document.getElementById('longitude').value = position.coords.longitude.toFixed(4);
+                        calculateSunTimes();
+                    },
+                    error => {
+                        alert('无法获取位置信息');
+                    }
+                );
+            } else {
+                alert('浏览器不支持地理位置');
+            }
+        }
+
+        function calculateSunTimes() {
+            const lat = parseFloat(document.getElementById('latitude').value);
+            const lon = parseFloat(document.getElementById('longitude').value);
+            
+            if (lat && lon) {
+                // 简化的日出日落计算（实际应用中应使用更精确的算法）
+                const date = new Date();
+                const julianDay = Math.floor((date - new Date(date.getFullYear(), 0, 0)) / 86400000);
+                
+                // 这里使用简化的公式，实际应用应该使用更精确的天文算法
+                const sunrise = new Date();
+                sunrise.setHours(6, 0, 0); // 简化为6:00
+                
+                const sunset = new Date();
+                sunset.setHours(18, 0, 0); // 简化为18:00
+                
+                document.getElementById('sunTimesResult').innerHTML = `
+                    <div>位置：${lat.toFixed(4)}°, ${lon.toFixed(4)}°</div>
+                    <div>日出时间：约 ${sunrise.toLocaleTimeString()}</div>
+                    <div>日落时间：约 ${sunset.toLocaleTimeString()}</div>
+                    <div style="color: var(--text-secondary); margin-top: 1rem;">
+                        注：这是简化计算，实际时间可能有所不同
+                    </div>
+                `;
+            }
+        }
+
+        // 事件倒计时功能
+        function createCountdown() {
+            const eventName = document.getElementById('eventName').value;
+            const eventDateTime = document.getElementById('eventDateTime').value;
+            
+            if (eventName && eventDateTime) {
+                const countdown = {
+                    id: Date.now(),
+                    name: eventName,
+                    targetDate: new Date(eventDateTime)
+                };
+                
+                countdowns.push(countdown);
+                updateCountdownsList();
+                
+                document.getElementById('eventName').value = '';
+                document.getElementById('eventDateTime').value = '';
+            }
+        }
+
+        function updateCountdownsList() {
+            const list = document.getElementById('countdownsList');
+            list.innerHTML = '<h3>倒计时列表</h3>';
+            
+            countdowns.forEach(countdown => {
+                const now = new Date();
+                const diff = countdown.targetDate - now;
+                
+                if (diff > 0) {
+                    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                    
+                    const countdownDiv = document.createElement('div');
+                    countdownDiv.style.padding = '1.5rem';
+                    countdownDiv.style.marginBottom = '1rem';
+                    countdownDiv.style.background = 'var(--bg-color)';
+                    countdownDiv.style.borderRadius = '0.5rem';
+                    countdownDiv.style.textAlign = 'center';
+                    
+                    countdownDiv.innerHTML = `
+                        <h4 style="margin-bottom: 1rem;">${countdown.name}</h4>
+                        <div style="font-size: 2rem; color: var(--accent-color);">
+                            ${days} 天 ${hours} 小时 ${minutes} 分钟
+                        </div>
+                        <div style="color: var(--text-secondary); margin-top: 0.5rem;">
+                            目标时间：${countdown.targetDate.toLocaleString()}
+                        </div>
+                        <button class="btn danger" style="margin-top: 1rem;" onclick="removeCountdown(${countdown.id})">删除</button>
+                    `;
+                    
+                    list.appendChild(countdownDiv);
+                }
+            });
+        }
+
+        function removeCountdown(id) {
+            countdowns = countdowns.filter(c => c.id !== id);
+            updateCountdownsList();
+        }
+
+        // 每秒更新倒计时
+        setInterval(() => {
+            if (currentPage === 'countdown') {
+                updateCountdownsList();
+            }
+        }, 1000);
+
+        function updateTimezones() {
+            const timezone1Select = document.getElementById('timezone1');
+            const timezone2Select = document.getElementById('timezone2');
+            
+            if (!timezone1Select || !timezone2Select) return;
+            
+            const timezone1Name = document.getElementById('timezone1Name');
+            const timezone2Name = document.getElementById('timezone2Name');
+            
+            // 更新时区名称显示
+            if (timezone1Name && timezone1Select.selectedIndex >= 0) {
+                const selectedText = timezone1Select.options[timezone1Select.selectedIndex].text;
+                timezone1Name.textContent = selectedText.split(' ')[1] || selectedText; // 只显示城市名称部分
+            }
+            if (timezone2Name && timezone2Select.selectedIndex >= 0) {
+                const selectedText = timezone2Select.options[timezone2Select.selectedIndex].text;
+                timezone2Name.textContent = selectedText.split(' ')[1] || selectedText; // 只显示城市名称部分
+            }
+            
+            // 立即更新时钟显示
+            updateClocks();
+            
+            // 更新时差
+            updateTimeDifference();
+        }
+
+        function startTimezoneClock() {
+            // 清除可能存在的旧定时器
+            if (timezoneInterval) {
+                clearInterval(timezoneInterval);
+            }
+            
+            // 立即更新一次
+            updateClocks();
+            
+            // 每秒更新一次
+            timezoneInterval = setInterval(() => {
+                if (currentPage === 'timezone') {
+                    updateClocks();
+                }
+            }, 1000);
+        }
+
+        function updateClocks() {
+            if (currentPage !== 'timezone') return;
+            
+            const now = new Date();
+            
+            const timezone1Element = document.getElementById('timezone1');
+            const timezone2Element = document.getElementById('timezone2');
+            
+            if (!timezone1Element || !timezone2Element) return;
+            
+            // 更新时钟1
+            const time1 = getTimeForTimezone(now, timezone1Element.value);
+            updateClock('1', time1);
+            
+            // 更新时钟2
+            const time2 = getTimeForTimezone(now, timezone2Element.value);
+            updateClock('2', time2);
+        }
+        function getTimeForTimezone(date, timezoneOffset) {
+            // 将字符串转换为数字
+            const offset = parseFloat(timezoneOffset) || 8;
+            
+            // 获取UTC时间
+            const utc = date.getTime() + (date.getTimezoneOffset() * 60000);
+            
+            // 计算目标时区的时间
+            const targetTime = new Date(utc + (offset * 3600000));
+            
+            return targetTime;
+        }
+
+        function updateClock(clockId, time) {
+    if (!time || isNaN(time.getTime())) return;
+    
+    const hours = time.getHours();
+    const minutes = time.getMinutes();
+    const seconds = time.getSeconds();
+    
+    // 更新模拟时钟指针
+    const hourDeg = (hours % 12) * 30 + minutes * 0.5;
+    const minuteDeg = minutes * 6;
+    const secondDeg = seconds * 6;
+    
+    const hourHand = document.getElementById(`hour${clockId}`);
+    const minuteHand = document.getElementById(`minute${clockId}`);
+    const secondHand = document.getElementById(`second${clockId}`);
+    
+    if (hourHand) hourHand.style.transform = `rotate(${hourDeg}deg)`;
+    if (minuteHand) minuteHand.style.transform = `rotate(${minuteDeg}deg)`;
+    if (secondHand) secondHand.style.transform = `rotate(${secondDeg}deg)`;
+    
+            // 更新数字时钟
+            const digitalTime = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            const digitalTimeElement = document.getElementById(`digitalTime${clockId}`);
+            if (digitalTimeElement) {
+                digitalTimeElement.textContent = digitalTime;
+            }
+            
+            // 更新日期
+            const dateElement = document.getElementById(`date${clockId}`);
+            if (dateElement) {
+                const dateStr = time.toLocaleDateString('zh-CN', { 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric',
+                    weekday: 'long'
+                });
+                dateElement.textContent = dateStr;
+            }
+        }
+
+        // 页面加载完成后初始化
+        window.addEventListener('load', function() {
+            // 显示主页
+            showHome();
+            
+            // 确保select元素的默认值被正确识别
+            const selects = document.querySelectorAll('select');
+            selects.forEach(select => {
+                const selectedOption = select.querySelector('option[selected]');
+                if (selectedOption && !select.value) {
+                    select.value = selectedOption.value;
+                }
+            });
+        });
+        
+        function initAgeCalculatorOptions() {
+            setTimeout(() => {
+                const yearSelect = document.getElementById('birthYear');
+                const monthSelect = document.getElementById('birthMonth');
+                const daySelect = document.getElementById('birthDay');
+                
+                if (!yearSelect || !monthSelect || !daySelect) return;
+                
+                // 初始化年份
+                if (yearSelect.options.length <= 1) {
+                    const currentYear = new Date().getFullYear();
+                    for (let i = 0; i < 120; i++) {
+                        const year = currentYear - i;
+                        const option = document.createElement('option');
+                        option.value = year;
+                        option.textContent = year + '年';
+                        yearSelect.appendChild(option);
+                    }
+                }
+                
+                // 初始化月份
+                if (monthSelect.options.length <= 1) {
+                    for (let i = 1; i <= 12; i++) {
+                        const option = document.createElement('option');
+                        option.value = i;
+                        option.textContent = i + '月';
+                        monthSelect.appendChild(option);
+                    }
+                }
+                
+                // 初始化日期
+                if (daySelect.options.length <= 1) {
+                    for (let i = 1; i <= 31; i++) {
+                        const option = document.createElement('option');
+                        option.value = i;
+                        option.textContent = i + '日';
+                        daySelect.appendChild(option);
+                    }
+                }
+            }, 100); // 延迟100ms确保DOM已经准备好
+        }
+    </script>
+</body>
+</html>
