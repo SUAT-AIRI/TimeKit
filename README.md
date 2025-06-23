@@ -10,7 +10,7 @@
 
 [![GitHub stars](https://img.shields.io/github/stars/yourusername/timekit?style=social)](https://github.com/yourusername/timekit/stargazers)
 [![GitHub forks](https://img.shields.io/github/forks/yourusername/timekit?style=social)](https://github.com/yourusername/timekit/network)
-[![GitHub issues](https://img.shields.io/github/issues/yourusername/timekit)](https://github.com/yourusername/timekit/issues)
+[![GitHub issues](https://img.shields.io/github/issues/yourusername/timekit)](https://github.com/SUAT-AIRI/TimeKit/issues)
 
 [🌟 在线体验](https://suat-airi.github.io/TimeKit/) · [📖 使用文档](#功能介绍) · [🐛 报告问题](https://github.com/SUAT-AIRI/TimeKit/issues) · [💡 功能请求](https://github.com/SUAT-AIRI/TimeKit/issues)
 
